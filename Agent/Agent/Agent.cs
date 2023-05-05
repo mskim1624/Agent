@@ -20,30 +20,22 @@ P : 우선순위(normal)
 ACK(Acknowledgment) 세그먼트: MSH 메시지의 수신 여부에 대한 응답을 담고 있습니다.
 MSA|CA|{Guid.NewGuid().ToString()} : 응답 유형, 처리결과 및 메시지 ID를 포함하는 ACK 메시지 세그먼트입니다.
  */
-
+//http://r741.realserver2.com/api/viewDB.php?page=1
 namespace Agent
 {
-    class Agent
+    public enum Machine
+    {
+        VCheck200,
+        PT10,
+        ISmartCare,
+        None
+    }
+
+    public class Agent
     {
 
-        static Dictionary<string, SerialPort> serialPorts = new Dictionary<string, SerialPort>();
-        static Dictionary<string, StringBuilder> receivedData = new Dictionary<string, StringBuilder>();
-        static byte[] ack = new byte[] { 0x06 };
-
-        static void Main(string[] args)
-        {
-            const int tcpPort = 7777;
-
-            Agent server = new Agent(tcpPort);
-            server.Start();
-
-            Console.WriteLine("Press Enter to exit.\n");
-            Console.ReadLine();
-
-            server.Stop();
-            Environment.Exit(0);
-        }
-
+        Dictionary<string , SerialInfo> serialInformation = new Dictionary<string , SerialInfo>();
+        byte[] ack = new byte[] { 0x06 };
         Random random = new Random();
         TcpListener tcpListener;
 
@@ -54,9 +46,8 @@ namespace Agent
             {
                 SerialPort serialPort = new SerialPort(portName, 9600, Parity.None, 8, StopBits.One);
                 serialPort.DataReceived += SerialPortDataReceived;
-                serialPorts.Add(portName, serialPort);
-                receivedData.Add(portName, new StringBuilder());
                 serialPort.Open();
+                serialInformation.Add(portName, new SerialInfo(serialPort));
             }
         }
 
@@ -64,7 +55,7 @@ namespace Agent
         {
             tcpListener.Start();
             Task.Run(() => AcceptTcpClients());
-            Task.Run(() => SendData());
+            Task.Run(() => SerialPortDataSend());
         }
 
         private async Task AcceptTcpClients()
@@ -94,8 +85,9 @@ namespace Agent
                     string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
                     Console.WriteLine("Received data from client: " + receivedData);
                     //VA20DBITG1495
-
-                    if (receivedData.Contains("VA20B02VA1038"))
+                    //VA20B02VA1038
+                    //VCheck 이름 입력
+                    if (receivedData.Contains("VA20DBITG1495"))
                     {
                         Console.WriteLine("VCheck Only Reply\n");
 
@@ -115,7 +107,7 @@ namespace Agent
                     else
                     {
                         byte[] ackData = new byte[] { 0x06 };
-
+                        Console.WriteLine("sends an ACK message to the client.");
                         await stream.WriteAsync(ackData, 0, ackData.Length);
                     }
 
@@ -123,7 +115,7 @@ namespace Agent
                 }
                 catch (IOException)
                 {
-                    Console.WriteLine("Client has disconnected");
+                    //Console.WriteLine("Client has disconnected");
                     break;
                 }
             }
@@ -156,8 +148,15 @@ namespace Agent
         {
             SerialPort sp = (SerialPort)sender;
             string data = sp.ReadExisting();
-            receivedData[sp.PortName].Append(data);
+            serialInformation[sp.PortName].currentMessage = data;
+            serialInformation[sp.PortName].message.Append(data);
+            serialInformation[sp.PortName].isConnection = true;
             Console.WriteLine($"Received data from {sp.PortName}: {data}");
+            if(serialInformation[sp.PortName].machine == Machine.None)
+            {
+                if (serialInformation[sp.PortName].Contains(""))
+                    serialInformation[sp.PortName].machine = Machine.ISmartCare;
+            }
         }
 
         //private async Task ReceiveFromSerialPort()
@@ -177,28 +176,28 @@ namespace Agent
         //    }
         //}
 
-        private async Task SendData()
+        private async Task SerialPortDataSend()
         {
             while (true)
             {
-                foreach (string portName in serialPorts.Keys)
+                foreach (string portName in serialInformation.Keys)
                 {
-                    StringBuilder buffer = receivedData[portName];
+                    string buffer = serialInformation[portName].currentMessage;
 
-                    if (buffer.Length > 0)
+                    if (!string.IsNullOrEmpty(buffer))
                     {
-                        string data = buffer.ToString();
-                        Console.WriteLine($"Received data from {portName}: {data}");
-
-                        // ACK 보내기
-                        SerialPort serialPort = serialPorts[portName];
-                        serialPort.Write(ack, 0, ack.Length);
-
-                        buffer.Clear();
+                        serialInformation[portName].ACK(Machine.ISmartCare, ack);
+                        
+                        Console.WriteLine("sends an ACK message to the client.");
+                        buffer = string.Empty;
                     }
                     else
                     {
-                        // 끝처리
+                        if (serialInformation[portName].isConnection)
+                        {
+
+                            serialInformation[portName].isConnection = false;
+                        }
                     }
                 }
                 await Task.Delay(100);
@@ -208,8 +207,8 @@ namespace Agent
         public void Stop()
         {
             tcpListener.Stop();
-            foreach (KeyValuePair<string, SerialPort> item in serialPorts)
-                item.Value.Close();
+            foreach (KeyValuePair<string, SerialInfo> item in serialInformation)
+                item.Value.port.Close();
         }
 
     }
