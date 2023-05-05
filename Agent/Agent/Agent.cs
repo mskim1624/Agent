@@ -124,26 +124,6 @@ namespace Agent
             Console.WriteLine("Connection with client closed");
         }
 
-        //private async Task ReceiveFromTcpClients()
-        //{
-        //    while (true)
-        //    {
-        //        if (tcpReceiveBuffer.TryDequeue(out byte[] data))
-        //        {
-        //            // Process data from TCP clients
-        //            Console.WriteLine($"Received {data.Length} bytes from TCP clients");
-                    
-                    
-        //            await Task.Delay(100);
-
-        //        }
-        //        else
-        //        {
-        //            await Task.Delay(10);
-        //        }
-        //    }
-        //}
-
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort sp = (SerialPort)sender;
@@ -159,22 +139,6 @@ namespace Agent
             }
         }
 
-        //private async Task ReceiveFromSerialPort()
-        //{
-        //    while (true)
-        //    {
-        //        if (serialReceiveBuffer.TryDequeue(out byte[] data))
-        //        {
-        //            // Process data from serial port
-        //            Console.WriteLine($"Received {data.Length} bytes from serial port");
-        //            await Task.Delay(100);
-        //        }
-        //        else
-        //        {
-        //            await Task.Delay(10);
-        //        }
-        //    }
-        //}
 
         private async Task SerialPortDataSend()
         {
@@ -197,6 +161,8 @@ namespace Agent
                         {
 
                             serialInformation[portName].isConnection = false;
+                            serialInformation[portName].currentMessage = string.Empty;
+                            serialInformation[portName].message.Clear();
                         }
                     }
                 }
