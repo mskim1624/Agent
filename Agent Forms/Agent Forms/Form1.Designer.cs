@@ -37,6 +37,8 @@ namespace Agent_Forms
             this.PortBox = new System.Windows.Forms.TextBox();
             this.IPLabel = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.ClientsCountBox = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.PortLabel = new System.Windows.Forms.Label();
             this.TCPLabel = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
@@ -61,8 +63,6 @@ namespace Agent_Forms
             this.InputBox = new System.Windows.Forms.TextBox();
             this.panel4 = new System.Windows.Forms.Panel();
             this.SendButton = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.ClientsCountBox = new System.Windows.Forms.TextBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -117,6 +117,29 @@ namespace Agent_Forms
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(267, 151);
             this.panel1.TabIndex = 3;
+            // 
+            // ClientsCountBox
+            // 
+            this.ClientsCountBox.AcceptsTab = true;
+            this.ClientsCountBox.Enabled = false;
+            this.ClientsCountBox.Font = new System.Drawing.Font("굴림", 10F, System.Drawing.FontStyle.Bold);
+            this.ClientsCountBox.Location = new System.Drawing.Point(109, 101);
+            this.ClientsCountBox.Name = "ClientsCountBox";
+            this.ClientsCountBox.ReadOnly = true;
+            this.ClientsCountBox.Size = new System.Drawing.Size(78, 27);
+            this.ClientsCountBox.TabIndex = 5;
+            this.ClientsCountBox.Text = "0";
+            this.ClientsCountBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("굴림", 10F, System.Drawing.FontStyle.Bold);
+            this.label2.Location = new System.Drawing.Point(30, 104);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(64, 17);
+            this.label2.TabIndex = 4;
+            this.label2.Text = "Clients";
             // 
             // PortLabel
             // 
@@ -369,29 +392,6 @@ namespace Agent_Forms
             this.SendButton.UseVisualStyleBackColor = true;
             this.SendButton.Click += new System.EventHandler(this.SendButton_Click);
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("굴림", 10F, System.Drawing.FontStyle.Bold);
-            this.label2.Location = new System.Drawing.Point(30, 104);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(64, 17);
-            this.label2.TabIndex = 4;
-            this.label2.Text = "Clients";
-            // 
-            // ClientsCountBox
-            // 
-            this.ClientsCountBox.AcceptsTab = true;
-            this.ClientsCountBox.Enabled = false;
-            this.ClientsCountBox.Font = new System.Drawing.Font("굴림", 10F, System.Drawing.FontStyle.Bold);
-            this.ClientsCountBox.Location = new System.Drawing.Point(109, 101);
-            this.ClientsCountBox.Name = "ClientsCountBox";
-            this.ClientsCountBox.ReadOnly = true;
-            this.ClientsCountBox.Size = new System.Drawing.Size(78, 27);
-            this.ClientsCountBox.TabIndex = 5;
-            this.ClientsCountBox.Text = "0";
-            this.ClientsCountBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
             // Agent
             // 
             this.ClientSize = new System.Drawing.Size(1240, 598);
@@ -399,6 +399,7 @@ namespace Agent_Forms
             this.Controls.Add(this.panel2);
             this.Name = "Agent";
             this.Text = "Agent Server";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Agent_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();

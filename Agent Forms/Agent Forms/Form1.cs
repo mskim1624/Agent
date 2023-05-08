@@ -368,8 +368,16 @@ namespace Agent_Forms
 
         private void SendButton_Click(object sender, EventArgs e)
         {
+            inputAck = InputBox.Text;
             LogBox.Items.Add(InputBox.Text);
             InputBox.Text = string.Empty;
+
+            messageReceivedTcs.SetResult(true);
+        }
+
+        private void Agent_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Stop();
         }
     }
 }
