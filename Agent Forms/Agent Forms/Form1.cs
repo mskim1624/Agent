@@ -154,9 +154,8 @@ namespace Agent_Forms
                         }
                         else
                         {
-                            byte[] ackData = new byte[] { 0x06 };
                             AddLog("sends an ACK message to the client.");
-                            await stream.WriteAsync(ackData, 0, ackData.Length);
+                            await stream.WriteAsync(ack, 0, ack.Length);
                         }
                     }
                     else
