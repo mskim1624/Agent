@@ -78,6 +78,9 @@ namespace Agent_Forms
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            byte[] bytes = { 0x1c };
+            string str = Encoding.ASCII.GetString(bytes);
+
             StartServer();
         }
         private async void StartServer()
@@ -199,8 +202,28 @@ namespace Agent_Forms
             string messageControlID = fields[9];
             string messageType = fields[8];
 
-            string ackMessage = "MSH|^~\\&|||||20230509184119||"+messageType+"|" + messageControlID + "|P|2.5|||AL|NE\r\n";
-            ackMessage += "MSA|AA|" + messageControlID + "\r\n";
+            //
+            string msh = $"MSH|^~\\&|LIS|LAB|LABGEO PT10|LAB|{DateTimeOffset.Now.ToString("yyyyMMddHHmmsszzz")}||ACK^R22^ACK|{messageControlID}|P|2.5.1|||ER|AL||UNICODE UTF-8|||LAB-29^IHE";
+
+            //string msh = $"MSH|^~\\&|ABL80 BASIC^309448|ABL80 BASIC^309448|||{DateTimeOffset.Now.ToString("yyyyMMddHHmmsszzz")}||{messageType}|{messageControlID}|P|2.5|||AL|NE";
+
+            string ack = $"MSA|AA|{messageControlID}";
+
+            byte[] bytes1 = { 0x0b };
+            string str1 = Encoding.ASCII.GetString(bytes1);
+
+            byte[] bytes2 = { 0x1c };
+            string str2 = Encoding.ASCII.GetString(bytes2);
+
+            byte[] bytes3 = { 0x0d };
+            string str3 = Encoding.ASCII.GetString(bytes3);
+
+            string ackMessage = $"{str1}{msh}\r{ack}{str2}{str3}\r";
+
+            //string ackMessage = $"{msh}\r\n{ack}\r\n";
+
+            //string ackMessage = "MSH|^~\\&|||||20230509184119||" + messageType+"|" + messageControlID + "|P|2.5|||AL|NE\r\n";
+            //ackMessage += "MSA|AA|" + messageControlID + "\r\n";
 
             return ackMessage;
         }
