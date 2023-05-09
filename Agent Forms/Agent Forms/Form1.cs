@@ -9,6 +9,8 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading;
+using System.Xml.Linq;
 
 namespace Agent_Forms
 {
@@ -28,6 +30,8 @@ namespace Agent_Forms
         int clientsCount;
         string inputAck;
 
+        //AutoResetEvent
+
         public Agent()
         {
             InitializeComponent();
@@ -38,10 +42,10 @@ namespace Agent_Forms
                 PortNameBox.Items.Add(name);
                 portList.Add(new SerialPort(name));
                 portList[i].DataReceived += SerialPortDataReceived;
+                serialInformation.Add(name, new SerialInfo(portList[i]));
                 try
                 {
                     portList[i].Open();
-                    serialInformation.Add(name, new SerialInfo(portList[i]));
                 }
                 catch (Exception ex)
                 {
@@ -291,7 +295,17 @@ namespace Agent_Forms
             if (currentPort.IsOpen)
                 portList[PortNameBox.SelectedIndex].Close();
             else
-                portList[PortNameBox.SelectedIndex].Open();
+            {
+                try
+                {
+                    portList[PortNameBox.SelectedIndex].Open();
+                }
+                catch (Exception ex)
+                {
+                    // 시리얼 포트 열기 거부 예외 처리
+                    Console.WriteLine("시리얼 포트 열기 거부: " + ex.Message);
+                }
+            }
         }
 
         private async void timer_Tick(object sender, EventArgs e)
