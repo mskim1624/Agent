@@ -149,7 +149,7 @@ namespace Agent_Forms
 
                         string ack = $"MSA|CA|{Guid.NewGuid()}";
 
-                        string responseMessage = $"{msh}\n\r{ack}\n\r";
+                        string responseMessage = $"{msh}\r\n{ack}\r\n";
 
                         AddChat(responseMessage);
 
@@ -165,9 +165,9 @@ namespace Agent_Forms
                     }
                     else
                     {
-                        string strACK = Encoding.ASCII.GetString(ack);
+                        string ackMessage = await CreateACKMessage(receivedData);
 
-                        AddChat(strACK);
+                        AddChat(ackMessage);
 
                         await messageReceivedTcs.Task;
 
@@ -190,6 +190,19 @@ namespace Agent_Forms
             client.Close();
             clientsCount--;
             AddLog("Connection with client closed");
+        }
+
+        static async Task<string>CreateACKMessage(string message)
+        {
+            string[] segments = message.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+            string[] fields = segments[0].Split('|');
+            string messageControlID = fields[9];
+            string messageType = fields[8];
+
+            string ackMessage = "MSH|^~\\&|||||20230509184119||"+messageType+"|" + messageControlID + "|P|2.5|||AL|NE\r\n";
+            ackMessage += "MSA|AA|" + messageControlID + "\r\n";
+
+            return ackMessage;
         }
 
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
