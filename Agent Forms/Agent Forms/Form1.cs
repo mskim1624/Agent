@@ -38,8 +38,16 @@ namespace Agent_Forms
                 PortNameBox.Items.Add(name);
                 portList.Add(new SerialPort(name));
                 portList[i].DataReceived += SerialPortDataReceived;
-                portList[i].Open();
-                serialInformation.Add(name, new SerialInfo(portList[i]));
+                try
+                {
+                    portList[i].Open();
+                    serialInformation.Add(name, new SerialInfo(portList[i]));
+                }
+                catch (Exception ex)
+                {
+                    // 시리얼 포트 열기 거부 예외 처리
+                    Console.WriteLine("시리얼 포트 열기 거부: " + ex.Message);
+                }
             }
 
             PortNameBox.SelectedIndex = 0;
