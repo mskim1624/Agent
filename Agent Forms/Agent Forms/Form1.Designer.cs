@@ -42,7 +42,6 @@ namespace Agent_Forms
             this.PortLabel = new System.Windows.Forms.Label();
             this.TCPLabel = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.AutoAckSendCheckBox = new System.Windows.Forms.CheckBox();
             this.SerialLabel = new System.Windows.Forms.Label();
             this.panel3 = new System.Windows.Forms.Panel();
             this.Connection = new System.Windows.Forms.Button();
@@ -59,9 +58,9 @@ namespace Agent_Forms
             this.Box1 = new System.Windows.Forms.ComboBox();
             this.PortNameBox = new System.Windows.Forms.ComboBox();
             this.timer = new System.Windows.Forms.Timer(this.components);
-            this.LogBox = new System.Windows.Forms.ListBox();
             this.InputBox = new System.Windows.Forms.TextBox();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.LogTextBox = new System.Windows.Forms.RichTextBox();
             this.SendButton = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -164,7 +163,6 @@ namespace Agent_Forms
             // panel2
             // 
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.panel2.Controls.Add(this.AutoAckSendCheckBox);
             this.panel2.Controls.Add(this.SerialLabel);
             this.panel2.Controls.Add(this.panel3);
             this.panel2.Controls.Add(this.TCPLabel);
@@ -173,18 +171,6 @@ namespace Agent_Forms
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(297, 559);
             this.panel2.TabIndex = 5;
-            // 
-            // AutoAckSendCheckBox
-            // 
-            this.AutoAckSendCheckBox.AutoSize = true;
-            this.AutoAckSendCheckBox.Font = new System.Drawing.Font("굴림", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
-            this.AutoAckSendCheckBox.Location = new System.Drawing.Point(123, 516);
-            this.AutoAckSendCheckBox.Name = "AutoAckSendCheckBox";
-            this.AutoAckSendCheckBox.Size = new System.Drawing.Size(155, 21);
-            this.AutoAckSendCheckBox.TabIndex = 9;
-            this.AutoAckSendCheckBox.Text = "Auto ACK Send";
-            this.AutoAckSendCheckBox.UseVisualStyleBackColor = true;
-            this.AutoAckSendCheckBox.CheckedChanged += new System.EventHandler(this.AutoAckSendCheckBox_CheckedChanged);
             // 
             // SerialLabel
             // 
@@ -351,16 +337,6 @@ namespace Agent_Forms
             // 
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
-            // LogBox
-            // 
-            this.LogBox.Font = new System.Drawing.Font("굴림", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
-            this.LogBox.FormattingEnabled = true;
-            this.LogBox.ItemHeight = 23;
-            this.LogBox.Location = new System.Drawing.Point(15, 11);
-            this.LogBox.Name = "LogBox";
-            this.LogBox.Size = new System.Drawing.Size(864, 464);
-            this.LogBox.TabIndex = 6;
-            // 
             // InputBox
             // 
             this.InputBox.Font = new System.Drawing.Font("굴림", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
@@ -373,13 +349,23 @@ namespace Agent_Forms
             // panel4
             // 
             this.panel4.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel4.Controls.Add(this.LogTextBox);
             this.panel4.Controls.Add(this.SendButton);
             this.panel4.Controls.Add(this.InputBox);
-            this.panel4.Controls.Add(this.LogBox);
             this.panel4.Location = new System.Drawing.Point(332, 12);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(896, 559);
             this.panel4.TabIndex = 8;
+            // 
+            // LogTextBox
+            // 
+            this.LogTextBox.Font = new System.Drawing.Font("굴림", 10F);
+            this.LogTextBox.Location = new System.Drawing.Point(20, 19);
+            this.LogTextBox.Name = "LogTextBox";
+            this.LogTextBox.Size = new System.Drawing.Size(858, 472);
+            this.LogTextBox.TabIndex = 9;
+            this.LogTextBox.Text = "";
+            this.LogTextBox.TextChanged += new System.EventHandler(this.LogTextBox_TextChanged);
             // 
             // SendButton
             // 
@@ -438,13 +424,12 @@ namespace Agent_Forms
         private Label BaudRateLabel;
         private Button Connection;
         private Timer timer;
-        private ListBox LogBox;
         private TextBox InputBox;
         private Panel panel4;
-        private CheckBox AutoAckSendCheckBox;
         private Button SendButton;
         private TextBox ClientsCountBox;
         private Label label2;
+        private RichTextBox LogTextBox;
     }
 }
 

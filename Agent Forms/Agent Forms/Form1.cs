@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Ports;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO.Ports;
-using System.Net;
-using System.Net.Sockets;
-using System.IO;
 
 namespace Agent_Forms
 {
@@ -25,7 +26,6 @@ namespace Agent_Forms
         IPAddress ipAddress;
         int port;
         int clientsCount;
-        bool isAutoAckSend;
         string inputAck;
 
         public Agent()
@@ -53,8 +53,8 @@ namespace Agent_Forms
             PortNameBox.SelectedIndex = 0;
             currentPort = portList[0];
 
-            for (int i = 1200; i <= 9600; i *=2)
-            Box1.Items.Add(i);
+            for (int i = 1200; i <= 9600; i *= 2)
+                Box1.Items.Add(i);
 
             Box1.SelectedIndex = Box1.Items.Count - 1;
 
@@ -70,11 +70,6 @@ namespace Agent_Forms
             Box4.SelectedIndex = 1;
 
             timer.Enabled = true;
-
-            isAutoAckSend = true;
-            AutoAckSendCheckBox.Checked = isAutoAckSend;
-            InputBox.Enabled = false;
-            SendButton.Enabled = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -140,40 +135,45 @@ namespace Agent_Forms
                     //VA20DBITG1495
                     //VA20B02VA1038
                     //VCheck 이름 입력
-                    if (isAutoAckSend)
+                    if (receivedData.Contains("VA20DBITG1495"))
                     {
-                        if (receivedData.Contains("VA20DBITG1495"))
-                        {
-                            AddLog("VCheck Only Reply");
+                        AddLog("VCheck Only Reply");
 
-                            string mshGuid = Guid.NewGuid().ToString();
+                        string mshGuid = Guid.NewGuid().ToString();
 
-                            string msh = $"MSH|^~\\&amp;|Virtual HL7 Server^{mshGuid}^GUID|Instr RnD Dept|||{DateTimeOffset.Now.ToString("yyyyMMddHHmmsszzz")}|ACK^R01^ACK|{random.Next(1, 999999)}|P|2.6";
+                        string msh = $"MSH|^~\\&amp;|Virtual HL7 Server^{mshGuid}^GUID|Instr RnD Dept|||{DateTimeOffset.Now.ToString("yyyyMMddHHmmsszzz")}|ACK^R01^ACK|{random.Next(1, 999999)}|P|2.6";
 
-                            string ack = $"MSA|CA|{Guid.NewGuid()}";
+                        string ack = $"MSA|CA|{Guid.NewGuid()}";
 
-                            string responseMessage = $"{msh}\n\r{ack}\n\r";
+                        string responseMessage = $"{msh}\n\r{ack}\n\r";
 
-                            AddLog(responseMessage);
+                        AddChat(responseMessage);
 
-                            byte[] responseData = Encoding.ASCII.GetBytes(responseMessage);
-
-                            await stream.WriteAsync(responseData, 0, responseData.Length);
-                        }
-                        else
-                        {
-                            AddLog("sends an ACK message to the client.");
-                            await stream.WriteAsync(ack, 0, ack.Length);
-                        }
-                    }
-                    else
-                    {
                         await messageReceivedTcs.Task;
 
                         byte[] responseData = Encoding.ASCII.GetBytes(inputAck);
+
+                        AddLog("Server : " + inputAck);
+
                         await stream.WriteAsync(responseData, 0, responseData.Length);
 
-                        messageReceivedTcs.SetResult(false);
+                        messageReceivedTcs = new TaskCompletionSource<bool>();
+                    }
+                    else
+                    {
+                        string strACK = Encoding.ASCII.GetString(ack);
+
+                        AddChat(strACK);
+
+                        await messageReceivedTcs.Task;
+
+                        byte[] responseData = Encoding.ASCII.GetBytes(inputAck);
+
+                        await stream.WriteAsync(responseData, 0, responseData.Length);
+
+                        AddLog("Server Response : " + inputAck);
+
+                        messageReceivedTcs = new TaskCompletionSource<bool>();
                     }
                     buffer = new byte[1024];
                 }
@@ -211,83 +211,60 @@ namespace Agent_Forms
                 foreach (string portName in serialInformation.Keys)
                 {
                     string buffer = serialInformation[portName].currentMessage;
-                    if (isAutoAckSend)
+                    if (!string.IsNullOrEmpty(buffer))
                     {
-                        if (!string.IsNullOrEmpty(buffer))
-                        {
-                            serialInformation[portName].ACK(SerialInfo.Machine.ISmartCare, ack);
+                        string strACK = Encoding.ASCII.GetString(ack);
 
-                            AddLog("sends an ACK message to the client.");
-                            buffer = string.Empty;
-                        }
-                        else
-                        {
-                            if (serialInformation[portName].isConnection)
-                            {
+                        AddChat(strACK);
 
-                                serialInformation[portName].isConnection = false;
-                                serialInformation[portName].currentMessage = string.Empty;
-                                serialInformation[portName].message.Clear();
-                            }
-                        }
-                    }
-                    else
-                    {
                         await messageReceivedTcs.Task;
 
                         byte[] responseData = Encoding.ASCII.GetBytes(inputAck);
                         serialInformation[portName].port.Write(responseData, 0, responseData.Length);
 
-                        messageReceivedTcs.SetResult(false);
+                        AddLog("Server Response : " + inputAck);
+
+                        messageReceivedTcs = new TaskCompletionSource<bool>();
+
+                        //serialInformation[portName].ACK(SerialInfo.Machine.ISmartCare, ack);
+
+                        //AddLog("sends an ACK message to the client.");
+                        //buffer = string.Empty;
+                    }
+                    else
+                    {
+                        if (serialInformation[portName].isConnection)
+                        {
+
+                            serialInformation[portName].isConnection = false;
+                            serialInformation[portName].currentMessage = string.Empty;
+                            serialInformation[portName].message.Clear();
+                        }
                     }
                 }
                 await Task.Delay(100);
             }
         }
 
-        private void HandleClient(TcpClient tcpClient)
-        {
-            try
-            {
-                // 클라이언트 IP 주소 가져오기
-                string clientIPAddress = ((IPEndPoint)tcpClient.Client.RemoteEndPoint).Address.ToString();
 
-                // 로그에 클라이언트 접속 메시지 출력
-                string message = $"클라이언트 접속됨 - IP: {clientIPAddress}";
-                AddLog(message);
-
-                // 데이터 받기
-                byte[] buffer = new byte[1024];
-                int bytesReceived = tcpClient.GetStream().Read(buffer, 0, buffer.Length);
-                string data = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
-
-                // 데이터 출력
-                AddLog($"받은 데이터: {data}");
-
-                // 데이터 보내기
-                byte[] bytesToSend = Encoding.UTF8.GetBytes("서버에서 보낸 메시지입니다.");
-                tcpClient.GetStream().Write(bytesToSend, 0, bytesToSend.Length);
-
-                // 클라이언트와 연결 종료
-                tcpClient.Close();
-
-                // 로그에 클라이언트 연결 종료 메시지 출력
-                AddLog("클라이언트와 연결 종료됨");
-            }
-            catch (Exception ex)
-            {
-                AddLog($"클라이언트 처리 실패 - {ex.Message}");
-            }
-        }
-
-        private void AddLog(string message)
+        void AddLog(string message)
         {
             Invoke((MethodInvoker)delegate
             {
-                LogBox.Items.Add(message);
+                LogTextBox.AppendText(message + "\r\n");
+                LogTextBox.ScrollToCaret();
             });
-            
         }
+
+        void AddChat(string message)
+        {
+            Invoke((MethodInvoker)delegate
+            {
+                InputBox.Text = message;
+                inputAck = message;
+            });
+        }
+
         public static IPAddress GetLocalIPAddress()
         {
             // 호스트 이름을 가져옵니다
@@ -311,7 +288,7 @@ namespace Agent_Forms
         private void Connection_Click(object sender, EventArgs e)
         {
 
-            if(currentPort.IsOpen)
+            if (currentPort.IsOpen)
                 portList[PortNameBox.SelectedIndex].Close();
             else
                 portList[PortNameBox.SelectedIndex].Open();
@@ -343,30 +320,12 @@ namespace Agent_Forms
         {
             currentPort = portList[PortNameBox.SelectedIndex];
         }
-        private void AutoAckSendCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            if (AutoAckSendCheckBox.Checked)
-            {
-                //AddLog("Automatic ack sending");
-                isAutoAckSend = true;
-                InputBox.Enabled = false;
-                SendButton.Enabled = false;
-            }
-            else
-            {
-                //AddLog("Send manual ACK");
-                isAutoAckSend = false;
-                InputBox.Enabled = true;
-                SendButton.Enabled = true;
-            }
-        }
-
         private void Input_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter)
             {
                 inputAck = InputBox.Text;
-                LogBox.Items.Add(InputBox.Text);
+                //LogTextBox.AppendText(InputBox.Text);
                 InputBox.Text = string.Empty;
 
                 messageReceivedTcs.SetResult(true);
@@ -376,7 +335,7 @@ namespace Agent_Forms
         private void SendButton_Click(object sender, EventArgs e)
         {
             inputAck = InputBox.Text;
-            LogBox.Items.Add(InputBox.Text);
+            //LogTextBox.AppendText(InputBox.Text);
             InputBox.Text = string.Empty;
 
             messageReceivedTcs.SetResult(true);
@@ -385,6 +344,15 @@ namespace Agent_Forms
         private void Agent_FormClosing(object sender, FormClosingEventArgs e)
         {
             Stop();
+        }
+
+        private void LogTextBox_TextChanged(object sender, EventArgs e)
+        {
+            if (LogTextBox.Visible && LogTextBox.Enabled)
+            {
+                LogTextBox.SelectionStart = LogTextBox.Text.Length;
+                LogTextBox.ScrollToCaret();
+            }
         }
     }
 }
